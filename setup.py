@@ -6,10 +6,10 @@ setup(
     name='Frigid Page Manager',
     version='0.1',
     description='Anonymous page repost manager',
-    url='http://github.com/storborg/funniest',
+    url='https://github.com/frigidengoboii/fpm',
     author='Frigid Engo Boii',
-    author_email='flyingcircus@example.com',
-    license='MIT',
+    author_email='frigidengoboii@gmail.com',
+    license='CC-BY-SA',
     packages=['fpm'],
     install_requires=[
         'requests',

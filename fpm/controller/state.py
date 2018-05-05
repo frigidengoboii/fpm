@@ -1,5 +1,6 @@
 from datetime import datetime
 import pickle
+import os.path
 
 class FpmState:
     
@@ -19,7 +20,10 @@ class FpmState:
         with open(filename, 'wb+') as fp:
             pickle.dump(self, fp)
 
-    def load(filename):
+    # Fails silently!!
+    def load(filename, no_silent_fail=False):
+        if not os.path.isfile(filename) and not no_silent_fail:
+            return FpmState()
         with open(filename, 'rb') as fp:
             return pickle.load(fp)
 
