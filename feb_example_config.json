@@ -1,0 +1,22 @@
+{
+    "is_fpm_config_file": true,
+    "example_setup_formatted_for": "Frigid Engo Boii of USYD",
+    "fpm": {
+        "state_file": "fpm.state.pickle",
+	"post_format": "templates/feb.tmpl",
+        "timestamp_format": "%d/%m/%Y %H:%M"
+    },
+    "fb_api": {
+        "app_id": "<facebook app id>",
+        "app_secret": "<facebook app secret>",
+        "client_token": "<facebook client token>",
+        "page_id": "<facebook page id>"
+    },
+    "sheets_api": {
+        "api_key": "<google api key>",
+        "spreadsheet_id": "<google sheets id>",
+        "column_range": "A:F",
+        "column_mappings": 
+            ["timestamp", "content", "credit", "topic", "response", "code"]
+    }
+}
