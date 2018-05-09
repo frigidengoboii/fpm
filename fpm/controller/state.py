@@ -11,7 +11,8 @@ class FpmState:
                 'ignore_messages_older_than': datetime(1970, 1, 1),
                 'posts': set(),
                 'access_token': None,
-                'page_access_token': None
+                'page_access_token': None,
+                'cookies': []
             }
         for k, v in defaults.items():
             setattr(self, k, v)

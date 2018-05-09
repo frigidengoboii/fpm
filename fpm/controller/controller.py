@@ -1,8 +1,14 @@
 from xxhash import xxh64
 import json
 import pytz
+import importlib
 from datetime import datetime
 from pprint import pprint
+
+from selenium.common.exceptions import NoAlertPresentException
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait 
+from selenium.webdriver.support import expected_conditions 
 
 from fpm.controller.state import FpmState
 from fpm.graph.api import GraphApi
@@ -11,6 +17,21 @@ from fpm.sheets.api import SheetsApi
 from fpm.util.post_tools import messages_to_postlist, sheets_to_postlist
 
 class FpmController:
+
+    SELENIUM_XPATH_MAP = {
+            'post_field': '//div[@aria-multiline=\'true\']',
+            'submit_button': '//span[text()=\'Publish\']'
+        }
+
+    SELENIUM_CHROME = {
+            'chromeOptions': {
+                'prefs': {
+                    'profile.managed_default_content_settings.notifications': 1
+                }
+            }
+        }
+    
+    SELENIUM_LOGIN_URL = 'https://www.facebook.com/login/'
 
     def __init__(self, config):
         # load and hook config
@@ -25,6 +46,7 @@ class FpmController:
             self.state = FpmState.load(self.config['fpm']['state_file'])
         else:
             self.state = FpmState()
+        self.selenium = None
 
     # setup process also returns postlist 
     def setup(self, graph_auth_callback):
@@ -78,6 +100,94 @@ class FpmController:
                 access_token=self.state.access_token,
             )
         self.state.save(self.config['fpm']['state_file'])
+
+    def setup_selenium(self, auth_conf_callback):
+        args = {}
+        mod = self.config['selenium']['python_module']
+        path = self.config['selenium']['driver_path']
+        if path:
+            args['executable_path'] = path
+        if 'chrome' in path:
+            args['desired_capabilities'] = FpmController.SELENIUM_CHROME
+
+        # import selenium
+        wd = importlib.import_module(mod)
+
+        self.selenium = wd.WebDriver(**args)
+        
+        # Cookie injection
+        if len(self.state.cookies):
+            self.selenium.get(FpmController.SELENIUM_LOGIN_URL)
+            for cookie in self.state.cookies:
+                self.selenium.add_cookie(cookie)
+
+        self.selenium.get(FpmController.SELENIUM_LOGIN_URL)
+        if self.selenium.current_url == FpmController.SELENIUM_LOGIN_URL:
+            auth_conf_callback()
+        self.state.cookies = self.selenium.get_cookies()
+        self.state.save(self.config['fpm']['state_file'])
+        return
+
+    def stop_selenium(self):
+        if self.selenium:
+            self.selenium.quit()
+            try:
+                self.selenium.switch_to_alert().accept()
+            except NoAlertPresentException:
+                pass
+            self.selenium = None
+
+    def process_post_selenium(self, post, confirmation_callback, 
+            success_callback):
+        # check for duplicate content posts
+        if not self.selenium:
+            raise 'Error: Selenium not started. WTF dude'
+
+        post['hash'] = xxh64(post['content']).hexdigest()
+        if post['hash'] in self.state.posts:
+            return False
+
+        if post['timestamp']:
+            post['nice_timestamp'] = post['timestamp'].strftime(
+                    self.config['fpm']['timestamp_format']
+                )
+        if post['credit'] != '':
+            post['credit'] = ' - {}'.format(post['credit'])
+        post['post_number'] = self.state.current_post_number
+        post['_repr'] = self.post_format.format_map(post)
+        try:
+            self.selenium.get('https://facebook.com/{}'.format(
+                    self.config['fb_api']['page_id']
+                ))
+            self.selenium.switch_to_alert().accept()
+        except NoAlertPresentException:
+            pass
+        postbox = WebDriverWait(self.selenium, 10).until(
+                expected_conditions.presence_of_element_located(
+                    (By.XPATH, FpmController.SELENIUM_XPATH_MAP['post_field'])
+                )
+            )
+        postbox.click()
+        postbox.send_keys(post['_repr'])
+
+        if not confirmation_callback(post):
+            self.state.ignore_messages_older_than = post['timestamp']
+            self.state.save(self.config['fpm']['state_file'])
+            return False
+        res = None
+        self.selenium.find_element_by_xpath(
+                FpmController.SELENIUM_XPATH_MAP['submit_button']
+            ).click()
+        self.state.current_post_number += 1
+        self.state.ignore_messages_older_than = post['timestamp']
+        self.state.posts.add(post['hash'])
+        self.state.save(self.config['fpm']['state_file'])
+
+        success_callback(post, res)
+        return True
+        
+
+
 
     def process_post(self, post, confirmation_callback, success_callback, 
             graph_auth_callback):

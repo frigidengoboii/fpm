@@ -15,7 +15,8 @@ setup(
         'requests',
         'google-api-python-client',
         'pytz', 'tzlocal',
-        'xxhash'
+        'xxhash',
+        'selenium'
       
     ],
     entry_points = {
