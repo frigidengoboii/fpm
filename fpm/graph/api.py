@@ -62,8 +62,8 @@ class GraphApi:
 
         params = {
                 'client_id': app_id,
-                'redirect_uri': self.redirect_uri,
-                'scope': GraphApi.APP_PERMS
+                #'scope': GraphApi.APP_PERMS,
+                'redirect_uri': self.redirect_uri
             }
         uri = 'https://www.facebook.com/dialog/oauth'
 
@@ -117,7 +117,7 @@ class GraphApi:
             if 'error' in data:
                 print('Poll failed. Trying again soon...')
                 print(data)
-                #print('Message:{}'.format(data['error']['error_user_msg']))
+                print('Message:{}'.format(data['error']['error_user_msg']))
             else:
                 self.access_token = data['access_token']
                 self.access_token_expiry = data['expires_in']

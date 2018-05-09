@@ -55,7 +55,10 @@ def sheets_to_postlist(sheet, mappings,
             if not m or m == 'timestamp':
                 continue
             else:
-                post[m] = row[i]
+                if len(row) <= i:
+                    post[m] = ''
+                else:
+                    post[m] = row[i]
         yield post
 
 
