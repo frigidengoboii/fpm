@@ -95,8 +95,13 @@ class FpmController:
         return postlist
 
     def graph_auth_flow(self, graph_auth_callback):
-        self.state.access_token = graph_auth_callback(self.graph)
-        self.state.page_access_token = self.graph.get_page_access_token(
+        try:
+            self.state.page_access_token = self.graph.get_page_access_token(
+                access_token=self.state.access_token,
+            )
+        except GraphAuthError as e:
+            self.state.access_token = graph_auth_callback(self.graph)
+            self.state.page_access_token = self.graph.get_page_access_token(
                 access_token=self.state.access_token,
             )
         self.state.save(self.config['fpm']['state_file'])
