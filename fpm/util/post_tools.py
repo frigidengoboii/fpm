@@ -3,9 +3,17 @@ import pytz
 from tzlocal import get_localzone
 from collections import defaultdict
 
+'''
+    FB Graph API and Sheets API datetime output formats.
+'''
 FB_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S%z'
 SHEETS_DATETIME_FORMAT = '%d/%m/%Y %H:%M:%S'
 
+'''
+    Converts Graph API message output <messages> to postset (i.e. list of dicts),
+    excludes messages sent from <page_id> (i.e. outgoing messages) and messages
+    older than <ignore_messages_older_than>.
+'''
 def messages_to_postlist(messages, page_id=None,
         ignore_messages_older_than=datetime.utcfromtimestamp(0)):
     if not ignore_messages_older_than.tzinfo:
@@ -33,6 +41,10 @@ def messages_to_postlist(messages, page_id=None,
             post['link'] = conv['link']
             yield post
 
+'''
+    Converts Sheets API data output <sheet> to postset, ignoring rows with
+    "timestamp" field older than <ignore_messages_older_than>.
+'''
 def sheets_to_postlist(sheet, mappings, 
         ignore_messages_older_than=datetime.utcfromtimestamp(0)):
     for row in sheet:

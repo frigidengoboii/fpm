@@ -9,33 +9,34 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from fpm.util.decorators import default_args as default_args
 from .exceptions import GraphAuthError, GraphUnknownError
 
+'''
+    FB Graph Api handler class
+    
+    Two possible auth methods:
+     - FB Device Login (implemented instead of FB Login Auth because it doesn't 
+       require us to run a webserver and catch the redirect)
+     - FB Login Auth [DEPRECATED and removed]
+
+    Required options/settings in config:
+    config.json
+     |- fb_api
+     |   |- enable          [bool]
+     |   |- app_id          [uint]
+     |   |- app_secret      [hexstring]
+     |   |- client_token    [hexstring]
+     |   |- page_id         [uint]
+'''
 class GraphApi:
     API_VERSION = '2.10'
     API_ENDPOINT = 'https://graph.facebook.com/v{}'.format(API_VERSION)
     APP_PERMS = 'manage_pages,publish_pages,read_page_mailboxes'
     
-    #CURRENTLY UNUSED
-    class _Handler(BaseHTTPRequestHandler):
-        def do_GET():
-            strip_code()
+    '''
+        __init__(self, app_id, app_secret, host, port, page_id)
 
-        def do_POST():
-            strip_code()
-
-        def strip_code():
-            params = { p.split('&')[0] : p.split('&')[1] 
-                    for p in requestline.split('?')[-1].split('&') }
-            if 'code' in params:
-                server.__ACCESS_CODE__ = params['code']
-                send_response(200, 
-                        'Code received. You may close this window now!')
-                server.shutdown()
-            else:
-                send_response(200, 
-                        'Not the code we\'re looking for. '
-                        'Keep looking; try the address again!')
-                
-    #   __init__(self, app_id, app_secret, host, port, page_id)
+        Loads options, tries to load access tokens from temp files if not
+        specified
+    '''
     def __init__(self, *args, **kwargs):
         if 'config' in kwargs:
             with open(kwargs['config']) as fp:
@@ -55,32 +56,12 @@ class GraphApi:
                 self.page_access_token = fp.read().strip()
         self.redirect_uri = "https://google.com"
     
-    #CURRENTLY UNUSED
-    @default_args('app_id', 'app_secret', 'host', 'port')
-    def init_login(self, app_id=None, app_secret=None, 
-            host=None, port=None):
+    '''
+        Log in using facebook's device login API.
 
-        params = {
-                'client_id': app_id,
-                #'scope': GraphApi.APP_PERMS,
-                'redirect_uri': self.redirect_uri
-            }
-        uri = 'https://www.facebook.com/dialog/oauth'
-
-        full_uri = '{}?{}'.format(uri, '&'.join(['{}={}'.format(k, v) 
-                                        for k, v in params.items()]))
-
-        print('Please copy the following URL '
-            'into your browser and log in\n{}'.format(full_uri))
-        
-        addr = ('', 8000)
-        s = HTTPServer(addr, GraphApi._Handler)
-        s.serve_forever(poll_interval=0.5)
-
-        # wait till shutdown
-        self.auth_code = server.__ACCESS_CODE__
-        return self.auth_code
-
+        Asks for user to navigate to browser and accept permissions for graph
+        API. 
+    '''
     @default_args('app_id', 'client_token', 'app_secret', 'redirect_uri')
     def device_login(self, app_id=None, client_token=None, app_secret=None,
             redirect_uri=None):
@@ -134,24 +115,10 @@ class GraphApi:
 
         return self.access_token
 
-    @default_args('app_id', 'auth_code', 'app_secret', 'redirect_uri')
-    def get_access_token(self, app_id=None, auth_code=None, app_secret=None, 
-            redirect_uri= None):
-        params = {
-                'client_id': app_id,
-                'redirect_uri': self.redirect_uri,
-                'client_secret': app_secret,
-                'code': auth_code
-            }
-        uri = '{}/oauth/access_token'.format(
-                GraphApi.API_ENDPOINT
-            )
-        r = requests.get(uri, params=params)
-        data = json.loads(r.text)
-        self.check_response_auth(data)
-        self.access_token = data['access_token']
-        return self.access_token
-
+    '''
+        Sends a text post with content <message> to feed of page associated 
+        with <page_id>. Requires auth via <page_access_token>.
+    '''
     @default_args('page_access_token','page_id')
     def post_text(self, message, page_access_token=None, page_id=None):
         params = {
@@ -166,6 +133,10 @@ class GraphApi:
         self.check_response_auth(data)
         return data['id']
 
+    '''
+        Gets a page access token for page associated with <page_id> through
+        account associated with <access_token>.
+    '''
     @default_args('access_token','page_id')
     def get_page_access_token(self, access_token=None, page_id=None):
         params = {
@@ -184,6 +155,10 @@ class GraphApi:
 
         return self.page_access_token
 
+    '''
+        Dumps all messages received by <page_id>. Requires <page_access_token> 
+        for authentication.
+    '''
     @default_args('page_access_token','page_id')
     def get_conversations(self, page_access_token=None, page_id=None):
         params = {
@@ -200,7 +175,11 @@ class GraphApi:
         data = json.loads(r.text)
         self.check_response_auth(data)
         return data['data']
-
+    
+    '''
+        Utility method to check response to authentication request.
+        Raises GraphAuthError or GraphUnknownError when appropriate.
+    '''
     def check_response_auth(self, data):
         if 'error' in data:
             data = data['error']

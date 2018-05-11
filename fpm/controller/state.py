@@ -2,6 +2,9 @@ from datetime import datetime
 import pickle
 import os.path
 
+'''
+    Persistent state storage utility for FpmController objects
+'''
 class FpmState:
     
     def __init__(self):
@@ -16,12 +19,18 @@ class FpmState:
             }
         for k, v in defaults.items():
             setattr(self, k, v)
-
+    
+    '''
+        Saves state object to <filename>
+    '''
     def save(self, filename):
         with open(filename, 'wb+') as fp:
             pickle.dump(self, fp)
 
-    # Fails silently!!
+    '''
+        Loads state object from <filename>
+        Fails silently by default (and provides new empty state)
+    '''
     def load(filename, no_silent_fail=False):
         if not os.path.isfile(filename) and not no_silent_fail:
             return FpmState()

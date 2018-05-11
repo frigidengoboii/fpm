@@ -35,15 +35,14 @@ def cli_confirmation(post):
     conf = input('Would you like to post the above? Y/n? ')
     return ('y' in conf or 'Y' in conf)
     
-def cli_success(post, post_id):
+def cli_success(post):
     print('----------------------------------------------------------')
-    print('Post successfully posted to \n'
-            '    https://www.facebook.com/{}'.format(post_id))
+    print('Post successfully posted!\n')
     conf = input('Press enter to continue... ')
     return
     
 def login_prompt():
     print('----------------------------------------------------------')
-    conf = input('Please log in to facebook, then press enter to continue...')
+    conf = input('Please log in to Facebook, then press enter to continue...')
     return
 
