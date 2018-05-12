@@ -19,4 +19,8 @@
         "column_mappings": 
             ["timestamp", "content", "credit", "topic", "response", "code"]
     }
+    "selenium": {
+        "python_module": "selenium.webdriver.chrome.webdriver",
+        "driver_path": "/Applications/chromedriver"
+    }
 }
