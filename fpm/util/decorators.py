@@ -1,3 +1,8 @@
+'''
+    Default argument wrapper for instance methods.
+    Loads keyword arguments from instance (self) if available and not specified
+    by method call.
+'''
 def default_args(*defargs):
     def func_wrapper(func):
         def wrap_defaults(self, *args, **kwargs):

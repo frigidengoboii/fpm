@@ -4,7 +4,7 @@
     "fpm": {
         "state_file": "fpm.state.pickle",
 	"post_format": "templates/love_letters_revived.tmpl",
-        "timestamp_format": "%d/%m/%Y %H:%M"
+        "timestamp_format": "%H:%M (%d/%m/%Y)"
     },
     "fb_api": {
         "app_id": "<facebook app id>",
@@ -18,5 +18,9 @@
         "column_range": "A:B",
         "column_mappings": 
             ["timestamp", "content"]
+    }
+    "selenium": {
+        "python_module": "selenium.webdriver.chrome.webdriver",
+        "driver_path": "/Applications/chromedriver"
     }
 }
