@@ -3,7 +3,7 @@
 from setuptools import setup
 
 setup(
-    name='Frigid Page Manager',
+    name='Facebook Page Manager',
     version='0.1',
     description='Anonymous page repost manager',
     url='https://github.com/frigidengoboii/fpm',
@@ -16,11 +16,14 @@ setup(
         'google-api-python-client',
         'pytz', 'tzlocal',
         'xxhash',
-        'selenium'
-      
+        'selenium',
+        'click'
     ],
     entry_points = {
-        'console_scripts': ['fpm_cli=fpm.cli.crap_line_interface:crap_line_interface']
+        'console_scripts': [
+            'fpm_cli=fpm.cli.crap_line_interface:crap_line_interface',
+            'fpm_stategen=fpm.cli.stategen:stategen'
+        ]
     },
     zip_safe=False
 )

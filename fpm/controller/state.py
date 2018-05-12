@@ -9,7 +9,7 @@ class FpmState:
     
     def __init__(self):
         defaults = {
-                'current_sheets_row': 1,
+                'current_sheets_row': 2,
                 'current_post_number': 1,
                 'ignore_messages_older_than': datetime(1970, 1, 1),
                 'posts': set(),
